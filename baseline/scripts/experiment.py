@@ -13,7 +13,7 @@ sys.path.insert(0, parent_dir)
 from utils.env_utils import SafetyGymEnv
 
 DEFAULT_ENV_CONFIG_P = dict(
-    action_repeat=1,
+    action_repeat=3,
     max_episode_length=300,
     use_dist_reward=False,
     stack_obs=False,
@@ -25,7 +25,7 @@ DEFAULT_ENV_CONFIG_C = dict(
     stack_obs=False,
 )
 
-def main(robot, task, algo, seed, exp_name, cpu, wrapper):
+def main(robot, task, algo, seed, cost, exp_name, cpu, wrapper):
 
     # Verify experiment
     robot_list = ['point', 'car', 'doggo']
@@ -55,7 +55,7 @@ def main(robot, task, algo, seed, exp_name, cpu, wrapper):
     epochs = int(num_steps / steps_per_epoch)
     save_freq = 10
     target_kl = 0.01
-    cost_lim = 5
+    cost_lim = cost
 
     # Fork for parallelizing
     mpi_fork(cpu)
@@ -100,7 +100,8 @@ if __name__ == '__main__':
     parser.add_argument('--cpu', type=int, default=1)
     parser.add_argument('--wrapper', action='store_true')
     parser.add_argument('--gpu', type=int, default=0)
+    parser.add_argument('--cost', type=float, default=1)
     args = parser.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu)
     exp_name = args.exp_name if not(args.exp_name=='') else None
-    main(args.robot, args.task, args.algo, args.seed, exp_name, args.cpu, args.wrapper)
+    main(args.robot, args.task, args.algo, args.seed, args.cost, exp_name, args.cpu, args.wrapper)
