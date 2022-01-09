@@ -341,14 +341,17 @@ def plot_cost_reward(datasets, condition):
         for i in range(datasets[0].shape[0]):
             for j in idxes:
                 costs.add(datasets[j]['CumulativeCost'].values[i])
-        costs = sorted(list(costs))
-        cumulative_costs = np.zeros((len(costs), len(idxes)))
-        cumulative_rewards = np.zeros((len(costs), len(idxes)))
+        costs = np.array(sorted(list(costs)))
+        if method != 'MPC-RCE':
+            costs -= 3500
+        cc_mask = costs >= 0
+        cumulative_costs = np.zeros((costs.shape[0], len(idxes)))
+        cumulative_rewards = np.zeros((costs.shape[0], len(idxes)))
         for i in range(len(idxes)):
             cumulative_costs[:, i] = np.array(costs)
         for i in range(len(idxes)):
             idx = idxes[i]
-            for j in range(len(costs)):
+            for j in range(costs.shape[0]):
                 cost = costs[j]
                 mask = datasets[idx]['CumulativeCost'] == cost
                 if (np.sum(mask) == 0):
@@ -361,9 +364,9 @@ def plot_cost_reward(datasets, condition):
                     cumulative_rewards[i, j] = cumulative_rewards[i-1, j]
         for i in range(len(idxes)):
             tmp_data = pd.DataFrame()
-            tmp_data['CumulativeCost'] = cumulative_costs[:, i]
-            tmp_data['MaximumReward'] = cumulative_rewards[:, i]
-            tmp_data['Method'] = [method] * len(costs)
+            tmp_data['CumulativeCost'] = cumulative_costs[cc_mask, i]
+            tmp_data['MaximumReward'] = cumulative_rewards[cc_mask, i]
+            tmp_data['Method'] = [method] * np.sum(cc_mask)
             new_datasets.append(tmp_data)
     new_datasets = pd.concat(new_datasets, ignore_index=True)
     new_datasets = rename(new_datasets)
