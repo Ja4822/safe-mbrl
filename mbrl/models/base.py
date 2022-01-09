@@ -88,7 +88,7 @@ class DataBuffer:
     def save(self, path=None):
         assert path is not None, "The saving path is not specified!"
         x, y = self.get_all()
-        data = {"x":x,"y":y}
+        data = {"x": x, "y": y}
         joblib.dump(data, path)
         print("Successfully save data buffer to "+path)
 
@@ -97,8 +97,8 @@ class DataBuffer:
         data = joblib.load(path)
         x, y = data["x"], data["y"]
         data_num = x.shape[0]
-        if data_num<self.max_size:
-            self.input_buf[:data_num], self.output_buf[:data_num] = x, y
+        if data_num < self.max_size:
+            # self.input_buf[:data_num], self.output_buf[:data_num] = x, y
             self.ptr = data_num
         else:
             self.input_buf, self.output_buf = x[:self.max_size], y[:self.max_size]
