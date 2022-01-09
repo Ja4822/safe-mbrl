@@ -9,18 +9,19 @@
 import numpy as np
 from mbrl.optimizers import RandomOptimizer, CEMOptimizer, RCEOptimizer
 
+
 class SafeMPC(object):
     optimizers = {"CEM": CEMOptimizer, "RANDOM": RandomOptimizer, "RCE": RCEOptimizer}
 
-    def __init__(self, env, mpc_config, cost_model = None, n_ensembles=0):
+    def __init__(self, env, mpc_config, cost_model=None, n_ensembles=0):
         # mpc_config = config["mpc_config"]
         self.type = mpc_config["optimizer"].upper()
         self.horizon = mpc_config["horizon"]
         self.gamma = mpc_config["gamma"]
         self.beta = 0.4
         self.n_ensembles = n_ensembles
-        self.action_low = np.array(env.action_space.low) # array (dim,)
-        self.action_high = np.array(env.action_space.high) # array (dim,)
+        self.action_low = np.array(env.action_space.low)  # array (dim,)
+        self.action_high = np.array(env.action_space.high)  # array (dim,)
         self.action_dim = env.action_space.shape[0]
 
         # self.popsize = conf["popsize"]

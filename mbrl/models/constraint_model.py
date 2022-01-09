@@ -34,9 +34,9 @@ class DataBuffer:
         @param input_data [ndarray, output_dim]
         """
         if self.ptr == self.max_size:
-            self.full = 1 # finish a ring
+            self.full = 1  # finish a ring
             self.ptr = 0
-        self.input_buf[self.ptr] = input_data
+        # self.input_buf[self.ptr] = input_data
         self.output_buf[self.ptr] = output_data
         self.ptr += 1
 
@@ -61,7 +61,7 @@ class DataBuffer:
         x, y = data["x"], data["y"]
         data_num = x.shape[0]
         if data_num<self.max_size:
-            self.input_buf[:data_num], self.output_buf[:data_num] = x, y
+            # self.input_buf[:data_num], self.output_buf[:data_num] = x, y
             self.ptr = data_num
         else:
             self.input_buf, self.output_buf = x[:self.max_size], y[:self.max_size]
