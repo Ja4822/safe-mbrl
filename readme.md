@@ -1,8 +1,5 @@
 Constrained Model-based RL with Robust Cross Entropy Method
 ==================================
-<!-- This repo contains the code for [this paper](https://arxiv.org/abs/2010.07968). <br />
-[This website](https://sites.google.com/site/mpcrcesafeai2020/) contains a breif introduction to our paper.
- -->
  
 <p align="center">
 <!--   <img src="./media/pg1_trpol.gif" height="200"/> <img src="./media/pg2_trpol_10.gif" height="200"/> <br /> -->
@@ -206,48 +203,3 @@ python baseline/scripts/experiment.py --robot point --task Goal1 --algo trpo
 ```Shell
 python baseline/scripts/test_policy.py data/path/to/experiment
 ```
-<!-- 
-## Troubleshooting
-
-This section is reported based on Ubuntu 18.04.4 LTS.
-
-#### 1. `mujoco-py` installation
-Listed below are some of the errors we encountered during installation on our virtual environment:
-
-- Missing `patchelf`
-```
-  error: [Errno 2] No such file or directory: 'patchelf'
-  ----------------------------------------
-  ERROR: Failed building wheel for mujoco-py
-Failed to build mujoco-py
-ERROR: Could not build wheels for mujoco-py which use PEP 517 and cannot be installed directly
-```
-To install and configure this dependency:
-```Shell
-sudo -s
-curl -o /usr/local/bin/patchelf https://s3-us-west-2.amazonaws.com/openai-sci-artifacts/manual-builds/patchelf_0.9_amd64.elf
-chmod +x /usr/local/bin/patchelf
-```
-
-For other errors that are already recorded by `mujoco-py`, please refer to their official [troubleshooting section](https://github.com/openai/mujoco-py#troubleshooting).
-
-#### 2. Missing GLEW
-Similar to an error outlined in mujoco-py's official site, another error may appear during execution of the program:
-```
-ERROR: GLEW initalization error: Missing GL version
-```
-To install:
-```Shell
-sudo apt install libglew-dev
-```
-To configure:  
-Add the following to `.bashrc` or directly run the line on terminal
-```
-export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so
-```
-or
-```
-export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so:/usr/lib/x86_64-linux-gnu/libGL.so
-```
-**Note:** Don't forget to source the `.bashrc` file after modification.
- -->
