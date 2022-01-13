@@ -206,7 +206,7 @@ python baseline/scripts/experiment.py --robot point --task Goal1 --algo trpo
 ```Shell
 python baseline/scripts/test_policy.py data/path/to/experiment
 ```
-
+<!-- 
 ## Troubleshooting
 
 This section is reported based on Ubuntu 18.04.4 LTS.
@@ -250,4 +250,4 @@ or
 export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so:/usr/lib/x86_64-linux-gnu/libGL.so
 ```
 **Note:** Don't forget to source the `.bashrc` file after modification.
-
+ -->
