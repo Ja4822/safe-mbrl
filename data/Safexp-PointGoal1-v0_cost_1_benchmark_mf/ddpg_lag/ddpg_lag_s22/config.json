@@ -1,0 +1,40 @@
+{
+    "data_dir":	"Safexp-PointGoal1-v0_cost_1_benchmark",
+    "ddpg_lag":	{
+        "KD":	0.001,
+        "KI":	0.003,
+        "KP":	0.1,
+        "ac_model":	"mlp",
+        "act_noise":	0.1,
+        "actor_lr":	0.0003,
+        "cost_end":	5,
+        "cost_limit":	1,
+        "cost_start":	100,
+        "critic_lr":	0.001,
+        "decay_epoch":	200,
+        "gamma":	0.99,
+        "hidden_sizes":	[
+            256,
+            256
+        ],
+        "num_q":	1,
+        "num_qc":	1,
+        "polyak":	0.995,
+        "steps_per_epoch":	2000,
+        "use_cost_decay":	false,
+        "worker_config":	{
+            "batch_size":	300,
+            "buffer_size":	20000,
+            "warmup_steps":	0
+        }
+    },
+    "env":	"Safexp-PointGoal1-v0",
+    "episode_rerun_num":	50,
+    "evaluate_episode_num":	20,
+    "exp_name":	"ddpg_lag",
+    "policy":	"ddpg_lag",
+    "pretrain_dir":	null,
+    "sample_episode_num":	5,
+    "seed":	22,
+    "timeout_steps":	300
+}

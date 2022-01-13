@@ -60,9 +60,10 @@ def run(logger, config, args):
 
     # Prepare random collected dataset
     start_time = time.time()
-    pretrain_episodes = 1000 if args.load is None else 10
+    pretrain_episodes = 250 if args.load is None else 10
     pretrain_max_step = 50
     print("collecting random episodes...")
+    total_cost = 0
     data_num = 0
     for epi in tqdm(range(pretrain_episodes)):
         obs = env.reset()
@@ -75,11 +76,14 @@ def run(logger, config, args):
                 x, y = np.concatenate((obs, action)), obs_next
                 dynamic_model.add_data_point(x, y)
                 cost = 1 if info["cost"] > 0 else 0
+                total_cost += cost
                 cost_model.add_data_point(obs_next, cost)
                 data_num += 1
                 i += 1
             obs = obs_next
     print("Finish to collect %i data " % data_num)
+    print("total_cost = %d" % total_cost)
+    print("="*60)
 
     # training the model
     if args.load is None:
@@ -133,7 +137,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--robot', type=str, default='point', help="robot model, selected from `point` or `car` ")
     parser.add_argument('--level', type=int, default=1, help="environment difficulty, selected from `1` or `2`, where `2` would be more difficult than `1`")
-    parser.add_argument('--epoch', type=int, default=60, help="maximum epochs to train")
+    parser.add_argument('--epoch', type=int, default=100, help="maximum epochs to train")
     parser.add_argument('--episode', type=int, default=10, help="determines how many episodes data to collect for each epoch")
     parser.add_argument('--render', '-r', action='store_true', help="render the environment")
     parser.add_argument('--test', '-t', action='store_true', help="test the performance of pretrained models without training")
@@ -143,7 +147,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', '-n', type=str, default='test', help="name of the experiment, used to save data in a folder named by this parameter")
     parser.add_argument('--save', action='store_true', help="save the trained dynamic model, data buffer, and cost model")
     parser.add_argument('--load', type=str, default=None, help="load the trained dynamic model, data buffer, and cost model from a specified directory")
-    parser.add_argument('--ensemble', type=int, default=0, help="number of model ensembles, if this argument is greater than 0, then it will replace the default ensembles number in config.yml") # number of ensembles
+    parser.add_argument('--ensemble', type=int, default=0, help="number of model ensembles, if this argument is greater than 0, then it will replace the default ensembles number in config.yml")  # number of ensembles
     parser.add_argument('--optimizer', '-o', type=str, default="rce", help=" determine the optimizer, selected from `rce`, `cem`, or `random` ")  # random, cem or CCE
     parser.add_argument('--config', '-c', type=str, default='./config.yml', help="specify the path to the configuation file of the models")
 

@@ -1,0 +1,35 @@
+data_dir: Safexp-CarGoal2-v0_cost_2_benchmark
+timeout_steps: 300
+policy: ddpg_lag
+exp_name: ddpg_lag
+seed: 11
+env: Safexp-CarGoal2-v0
+episode_rerun_num: 50
+sample_episode_num: 5
+evaluate_episode_num: 20
+pretrain_dir: null
+ddpg_lag:
+    num_qc: 1
+    cost_limit: 2
+    use_cost_decay: false
+    cost_start: 100
+    cost_end: 5
+    decay_epoch: 200
+    KP: 0.1
+    KI: 0.003
+    KD: 0.001
+    steps_per_epoch: 2000
+    actor_lr: 0.0003
+    critic_lr: 0.001
+    ac_model: mlp
+    hidden_sizes:
+    - 256
+    - 256
+    act_noise: 0.1
+    gamma: 0.99
+    polyak: 0.995
+    num_q: 1
+    worker_config:
+        warmup_steps: 0
+        batch_size: 300
+        buffer_size: 20000

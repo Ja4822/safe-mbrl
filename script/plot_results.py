@@ -127,10 +127,6 @@ def get_datasets(logdir, condition=None):
             pro_path = os.path.join(root, 'progress.txt')
             print("reading data from %s" % (pro_path))
 
-            # print(unit)
-            # print(condition1)
-            # print(condition2)
-
             try:
                 exp_data = pd.read_table(pro_path)
             except:
@@ -150,10 +146,6 @@ def get_datasets(logdir, condition=None):
 
             datasets.append(exp_data)
     return datasets
-
-# def process_and_replace_data(data, path):
-#     data["EpCost"] -= 1
-#     data.to_csv(path, header=True, index=None,  sep='\t', mode='w')
 
 
 def shorten_datasets(datasets, cut, condition):
@@ -220,14 +212,9 @@ def align_datasets(datasets, x_label, condition):
 
 
 def process_steps(datasets):
-    # for data in datasets:
-    #     if data['Method'].values[0] == "MPC-RCE":
-    #         data['Steps'] += 5000
     for data in datasets:
         data['Steps'] -= data['Steps'].values[0]
         data['Steps'] += 1
-        # data['Steps'] = data['Steps'][data['Steps'] >= 100]
-        # data['Steps'] = data['Steps'][data['Steps'] <= 0.8e6]
     return datasets
 
 
@@ -251,84 +238,6 @@ def process_rewards_cost(datasets):
     return datasets
 
 
-def plot(datasets, x_label, y_label, condition, smooth, step_limit, thres, hue_order, lineloc=None, linename=None):
-    """
-        plot datasets to figure
-    """
-    y_labels = ['Reward', 'Cost']
-    # smooth
-    if smooth > 1:
-        # smooth done by taking nearby averages
-        smooth = min(smooth, len(datasets[0]))
-        y = np.ones(smooth)
-        for dataset in datasets:
-            for y_label in y_labels:
-                x = np.asarray(dataset[y_label])
-                z = np.ones(len(x))
-                smoothed_x = np.convolve(x, y, 'same') / np.convolve(z, y, 'same')
-                dataset[y_label] = smoothed_x
-
-    # get converged data
-    tmp_datasets = datasets.copy()
-    for dataset in tmp_datasets:
-        total_steps = dataset['Steps'].values[0]
-        # dataset = dataset[dataset['Steps'] > total_steps * thres]
-        dataset = dataset[dataset['Steps'] < total_steps * 0.1]
-    new_datasets = []
-    for i, method in enumerate(hue_order):
-        for data in tmp_datasets:
-            # print(data['Method'].values[0])
-            if data['Method'].values[0] == method:
-                new_datasets.append(data)
-
-    # merge multiple datasets into one for 'lineplot'
-    # each dataset differentiated by condition
-    datasets = pd.concat(datasets, ignore_index=True)
-    datasets = rename(datasets)
-
-    # Graphics
-    # plot data curves
-    for y_label in y_labels:
-        # print(y_label)
-        plt.figure()
-        sns.lineplot(data=datasets, x=x_label, y=y_label, hue=condition, ci='sd', hue_order=hue_order)
-        # sns.tsplot(data=datasets, time=x_label, value=y_label, unit="Unit", condition=condition, ci='sd')
-
-        # plot straight lines
-        if lineloc is not None and y_label == "Cost":
-            for i in range(len(lineloc)):
-                plt.axhline(y=lineloc[i], linestyle=STYLE[i], label=linename[i], color=LINECOLOR, linewidth=LINEWIDTH[i])
-
-        # Texts
-        # other attributes: family='serif'  style='italic'  etc  fontsize='X-large' fontsize=20
-        plt.xscale('log')
-        plt.xlim(1, step_limit)
-        plt.legend(loc='best', title=None, frameon=True, fontsize='medium')
-
-        # plt.xlabel(x_label + ' (log10)', labelpad=5, fontsize='large')
-        plt.ylabel(y_label, labelpad=5, fontsize='large')
-        plt.title(None)
-
-        # Layout
-        # plt.ylim(0,18)
-        plt.tight_layout(pad=1)
-        # .savefig("data/figures/"+y_label+".png")
-
-    # box plot
-    plt.figure(figsize=(8, 5))
-    new_datasets = pd.concat(new_datasets, ignore_index=True)
-    new_datasets = rename(new_datasets)
-
-    sns.boxplot(x=condition, y="Cost", data=new_datasets, showfliers=False, hue_order=hue_order)
-    if lineloc is not None:
-        for i in range(len(lineloc)):
-            plt.axhline(y=lineloc[i], linestyle=STYLE[i], label=linename[i], color=LINECOLOR, linewidth=LINEWIDTH[i])
-    plt.legend(loc='best', title=None, frameon=True, fontsize='medium')
-
-    # show plot
-    plt.show()
-
-
 def rename(datasets):
     datasets = datasets.replace(
                     {"Method": {
@@ -338,7 +247,63 @@ def rename(datasets):
     return datasets
 
 
-def plot_cost_reward(datasets, condition, hue_order, warmup_cost=3500):
+def process_data(logdir, x_label='TotalEnvInteracts', y_label='EpRet', cut=0, condition='Method', smooth=50):
+    # print(logdir)
+    datasets = process_all_datasets([logdir])
+    # array of DataFrame 's
+    # each column is a Series
+    datasets = shorten_datasets(datasets, cut, condition)
+    datasets = align_datasets(datasets, x_label, condition)
+
+    for df in datasets:
+        df.rename(columns={"EpCost": "Cost", "worker/EpCost": "Cost", "worker/EpRet": "Reward", "EpRet": "Reward", "AverageEpCost": "Cost", "AverageEpRet": "Reward",
+                           "TotalEnvInteracts": "Steps"}, inplace=True)
+
+    x_label = "Steps" if x_label == "TotalEnvInteracts" else x_label
+    y_label = "Cost" if y_label == "EpCost" or y_label == "AverageEpCost" else y_label
+    y_label = "Reward" if y_label == "EpRet" or y_label == "AverageEpRet" else y_label
+
+    datasets = process_steps(datasets)
+    datasets = process_rewards_cost(datasets)
+    return datasets
+
+
+def plot_data(data_in, axe, x_label, y_label, condition, smooth, hue_order=None, cost_limit=1):
+    """
+        plot datasets to figure
+    """
+    datasets = data_in.copy()
+    # smooth
+    if smooth > 1:
+        # smooth done by taking nearby averages
+        smooth = min(smooth, len(datasets[0]))
+        y = np.ones(smooth)
+        for dataset in datasets:
+            x = np.asarray(dataset[y_label])
+            z = np.ones(len(x))
+            smoothed_x = np.convolve(x, y, 'same') / np.convolve(z, y, 'same')
+            dataset[y_label] = smoothed_x
+
+    # merge multiple datasets into one for 'lineplot'
+    # each dataset differentiated by condition
+    datasets = pd.concat(datasets, ignore_index=True)
+    datasets = rename(datasets)
+    # Graphics
+    # plot data curves
+    sns.set(style="darkgrid", font_scale=1.5)
+    lp = sns.lineplot(ax=axe, data=datasets, x=x_label, y=y_label, hue=condition, ci='sd', hue_order=hue_order)
+    # lp = sns.lineplot(data=datasets, x=x_label, y=y_label, hue=condition, ci='sd')
+    # sns.tsplot(data=datasets, time=x_label, value=y_label, unit="Unit", condition=condition, ci='sd')
+
+    # plot straight lines
+    if y_label == "Cost":
+        axe.axhline(y=cost_limit, linestyle="--", label="cost limit", linewidth=2.5)
+    axe.legend("", frameon=False)
+    axe.set_xscale('log')
+    axe.set_xlim([1e3, 0.8e6])
+
+
+def plot_cost_reward(datasets, axe, condition, hue_order=None, warmup_cost=3500):
     methods = dict()
     for i, dataset in enumerate(datasets):
         method = dataset['Method'].values[0]
@@ -393,60 +358,127 @@ def plot_cost_reward(datasets, condition, hue_order, warmup_cost=3500):
     new_datasets = pd.concat(new_datasets, ignore_index=True)
     new_datasets = rename(new_datasets)
 
-    plt.figure()
-    sns.lineplot(data=new_datasets, x='CumulativeCost', y='MaximumReward', hue=condition, ci='sd', hue_order=hue_order)
-    plt.xscale('log')
-    # plt.show()
+    lp = sns.lineplot(ax=axe, data=new_datasets, x='CumulativeCost', y='MaximumReward', hue=condition, ci='sd', hue_order=hue_order)
+    axe.legend("", frameon=False)
+    axe.set_xscale('log')
+    # axe.set_xlim([0, 1e6])
 
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('logdir', nargs='*')
-    parser.add_argument('--xaxis', '-x', default='TotalEnvInteracts')
-    parser.add_argument('--yaxis', '-y', default='EpRet')
-    parser.add_argument('--condition', '-c', default='Method')
-    parser.add_argument('--smooth', '-s', type=int, default=30)
-    parser.add_argument('--cut', type=int, default=0)
-    parser.add_argument('--hline', type=float, nargs='*')
-    parser.add_argument('--linename', nargs='*')
-    args = parser.parse_args()
+def box_plot(datasets, ax, env_name, cost_limit, smooth=30):
+    if smooth > 1:
+        # smooth done by taking nearby averages
+        smooth = min(smooth, len(datasets[0]))
+        y = np.ones(smooth)
+        for dataset in datasets:
+            x = np.asarray(dataset['Cost'])
+            z = np.ones(len(x))
+            smoothed_x = np.convolve(x, y, 'same') / np.convolve(z, y, 'same')
+            dataset['Cost'] = smoothed_x
+    tmp_datasets = datasets.copy()
+    for dataset in tmp_datasets:
+        total_steps = dataset['Steps'].values[0]
+        dataset = dataset[dataset['Steps'] > total_steps * 0.9]
+    new_datasets = []
+    for j, method in enumerate(hue_order):
+        for d in tmp_datasets:
+            if d['Method'].values[0] == method:
+                new_datasets.append(d)
+    new_datasets = pd.concat(new_datasets, ignore_index=True)
 
-    x_label = args.xaxis
-    y_label = args.yaxis
-    condition = args.condition
-    smooth = args.smooth
-    cut = args.cut
-
-    if args.hline is not None or args.linename is not None:
-        if args.hline is None or args.linename is None:
-            raise Exception("number of horizontal lines is mismatched, check parameter input")
-        if len(args.hline) != len(args.linename):
-            raise Exception("number of horizontal lines is mismatched, check parameter input")
-    # print(args.hline)
-    # print(args.linename)
-    # --hline 14 17 10 --linename CPO PPO PPO-Lagrangian
-
-    datasets = process_all_datasets(args.logdir)
-    # array of DataFrame 's
-    # each column is a Series
-    datasets = shorten_datasets(datasets, cut, condition)
-    datasets = align_datasets(datasets, x_label, condition)
-
-    for df in datasets:
-        df.rename(columns={"EpCost": "Cost", "worker/EpCost": "Cost", "worker/EpRet": "Reward", "EpRet": "Reward", "AverageEpCost": "Cost", "AverageEpRet": "Reward",
-                           "TotalEnvInteracts": "Steps"}, inplace=True)
-
-    x_label = "Steps" if x_label == "TotalEnvInteracts" else x_label
-    y_label = "Cost" if y_label == "EpCost" or y_label == "AverageEpCost" else y_label
-    y_label = "Reward" if y_label == "EpRet" or y_label == "AverageEpRet" else y_label
-
-    datasets = process_steps(datasets)
-    datasets = process_rewards_cost(datasets)
-    hue_order = ['MPC-RCE(ours)', 'cpo', 'ppo', 'trpo', 'ppo_lag', 'ppo_lagrangian', 'trpo_lag', 'trpo_lagrangian', 'ddpg_lag', 'sac_lag']
-    plot_cost_reward(datasets, condition, hue_order, warmup_cost=3500)
-    plot(datasets, x_label, y_label, condition, smooth, step_limit=0.8e6, thres=0.9, hue_order=hue_order, lineloc=args.hline, linename=args.linename)
+    ax.set_title(env_name, fontsize=24)
+    sns.set(style="darkgrid", font_scale=1.5)
+    lp = sns.boxplot(x='Method', y="Cost", data=new_datasets, showfliers=False)
+    ax.axhline(y=cost_limit, linestyle="--", label="cost limit", linewidth=2.5)
+    ax.legend("", frameon=False)
+    ax.tick_params(axis='y', labelsize=14)
+    ax.tick_params(axis='x', labelsize=14)
+    ax.set(xlabel=None)
+    # ax.set_xlabel('Method', fontsize=18)
+    ax.set_ylabel('Cost', fontsize=18)
 
 
 if __name__ == "__main__":
-    main()
+
+    # boxplot for model-based
+    logdirs = ['data/Safexp-PointGoal1-v0_cost_1_benchmark_mf', 'data/Safexp-PointGoal2-v0_cost_2_benchmark_mf', 
+               'data/Safexp-CarGoal1-v0_cost_1_benchmark_mf/', 'data/Safexp-CarGoal2-v0_cost_2_benchmark_mf']
+    datasets = []
+    for logdir in logdirs:
+        data = process_data(logdir)
+        datasets.append(data)
+    hue_order = ['MPC-RCE(ours)', 'MPC-CEM', 'MPC-random']
+    env_names = ['Point-Goal1', 'Point-Goal2', 'Car-Goal1', 'Car-Goal2']
+    cost_limits = [1, 2, 1, 2]
+    rs = [0, 0, 1, 1]
+    cs = [0, 1, 0, 1]
+
+    fig = plt.figure()
+    gs = fig.add_gridspec(2, 2, hspace=0.3)
+    for i, data in enumerate(datasets):
+        ax = fig.add_subplot(gs[rs[i], cs[i]])
+        box_plot(data, ax, env_names[i], cost_limits[i])
+    plt.legend(loc='best').set_draggable(True)
+    plt.legend(bbox_to_anchor=(-1.4, 3.7), loc='upper center', ncol=9, handlelength=1, borderaxespad=0., prop={'size': 18})
+
+    # boxplot for model-free
+    hue_order = ['MPC-RCE(ours)', 'cpo', 'ppo', 'trpo', 'ppo_lag', 'trpo_lag', 'ddpg_lag', 'sac_lag']
+    fig = plt.figure()
+    gs = fig.add_gridspec(2, 2, hspace=0.3)
+    for i, data in enumerate(datasets):
+        ax = fig.add_subplot(gs[rs[i], cs[i]])
+        box_plot(data, ax, env_names[i], cost_limits[i])
+    plt.legend(loc='best').set_draggable(True)
+    plt.legend(bbox_to_anchor=(-1.4, 3.7), loc='upper center', ncol=9, handlelength=1, borderaxespad=0., prop={'size': 18})
+
+    # overview results
+    logdirs = ['data/Safexp-PointGoal1-v0_cost_1_benchmark_mf', 'data/Safexp-PointGoal2-v0_cost_2_benchmark_mf', 
+               'data/Safexp-CarGoal1-v0_cost_1_benchmark_mf/', 'data/Safexp-CarGoal2-v0_cost_2_benchmark_mf']
+    datasets = []
+    for logdir in logdirs:
+        data = process_data(logdir)
+        datasets.append(data)
+
+    hue_order = ['MPC-RCE(ours)', 'cpo', 'ppo', 'trpo', 'ppo_lag', 'trpo_lag', 'ddpg_lag', 'sac_lag']
+    columns = len(datasets)
+    # fig = plt.figure(figsize=(20, 11))
+    fig = plt.figure()
+    # gs = fig.add_gridspec(3, columns, hspace=0.1)
+    widths = [10]
+    heights = [14, 7]
+    gs = fig.add_gridspec(2, 1, width_ratios=widths, height_ratios=heights)
+    gs0 = gs[0].subgridspec(2, 4, hspace=0.05)
+    gs1 = gs[1].subgridspec(1, 4)
+    # axes = gs.subplots(sharex='col')
+    env_names = ['Point-Goal1', 'Point-Goal2', 'Car-Goal1', 'Car-Goal2']
+    cost_limits = [1, 2, 1, 2]
+    values = ['Reward', 'Cost']
+    for i, data in enumerate(datasets):
+        # axes[0, i].set_title(env_names[i], fontsize=18)
+        for j, value in enumerate(values):
+            ax = fig.add_subplot(gs0[j, i])
+            if j == 0:
+                ax.get_xaxis().set_visible(False)
+                ax.set_title(env_names[i], fontsize=24)
+            plot_data(data, axe=ax, x_label='Steps', y_label=value, condition='Method', smooth=50, hue_order=hue_order, cost_limit=cost_limits[i])
+            # change y tick text size
+            ax.tick_params(axis='y', labelsize=10)
+            ax.tick_params(axis='x', labelsize=10)
+            ax.set_ylabel(value, fontsize=18)
+            # hide y labels
+            if i != 0:
+                ax.set(ylabel=None)
+            if j == 1:
+                ax.set_xlabel('Steps', fontsize=18)
+
+        ax = fig.add_subplot(gs1[0, i])
+        plot_cost_reward(data, axe=ax, condition='Method', hue_order=hue_order, warmup_cost=3500)
+        ax.tick_params(axis='y', labelsize=10)
+        ax.tick_params(axis='x', labelsize=10)
+        ax.set_xlabel('Cumulative Cost', fontsize=18)
+        ax.set_ylabel('Maximum Reward', fontsize=18)
+        if i != 0:
+            ax.set(ylabel=None)
+
+    plt.legend(loc='best').set_draggable(True)
+    plt.legend(bbox_to_anchor=(-1.4, 3.7), loc='upper center', ncol=9, handlelength=1, borderaxespad=0., prop={'size': 18})
+    plt.show()
