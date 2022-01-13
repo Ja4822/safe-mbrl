@@ -400,8 +400,7 @@ def box_plot(datasets, ax, env_name, cost_limit, smooth=30):
 if __name__ == "__main__":
 
     # boxplot for model-based
-    logdirs = ['data/Safexp-PointGoal1-v0_cost_1_benchmark_mf', 'data/Safexp-PointGoal2-v0_cost_2_benchmark_mf', 
-               'data/Safexp-CarGoal1-v0_cost_1_benchmark_mf/', 'data/Safexp-CarGoal2-v0_cost_2_benchmark_mf']
+    logdirs = ['data/pg1', 'data/pg2', 'data/cg1', 'data/cg2']
     datasets = []
     for logdir in logdirs:
         data = process_data(logdir)
@@ -431,8 +430,6 @@ if __name__ == "__main__":
     plt.legend(bbox_to_anchor=(-1.4, 3.7), loc='upper center', ncol=9, handlelength=1, borderaxespad=0., prop={'size': 18})
 
     # overview results
-    logdirs = ['data/Safexp-PointGoal1-v0_cost_1_benchmark_mf', 'data/Safexp-PointGoal2-v0_cost_2_benchmark_mf', 
-               'data/Safexp-CarGoal1-v0_cost_1_benchmark_mf/', 'data/Safexp-CarGoal2-v0_cost_2_benchmark_mf']
     datasets = []
     for logdir in logdirs:
         data = process_data(logdir)
