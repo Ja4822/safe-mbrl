@@ -123,8 +123,6 @@ More hyper-parameters for the models and optimizers can be found in the `config.
 python run.py --robot point --level 1 -o rce --c config.yml -r -t --load data/pg1/weights/
 ```
 
-- To test with some pretrained models, please download the data from this [link](https://drive.google.com/file/d/1aJuI3iwphxhtd0L_CDUHqB4XN-xPpITk/view?usp=sharing), unzip it, and replace the `data` folder with the unzipped one. 
-
 We name each environment with the first letter of robot (`car` or `point`) + `g` (represent the Goal task) + `difficulty level`. For example, the `pg2` folder stores the experiment results for the PointGoal2 task. The trained dynamics model, data buffer, and cost model weights are stored in the `weights` folder within each environment folder. Other folders store the rewards and costs data for each method during training (the learning curves plots in the paper come from these data).
 
 ### Plot a Single Figure from Data
@@ -133,15 +131,12 @@ To plot a single figure from saved progress data, specify the directory and run:
 python script/plot.py path/to/stored/result -y Cost --smooth 30
 ```
 The script will parse all the sub directories in the `path/to/stored/` that contain `result` in the folder name.
-![image](/data/figures/pg1-Reward.png)
 
 
 Horizontal lines can be used as convergence values for model-free methods, as recalled from the proposed paper. Simply run:
 ```
 python script/plot.py data/pg1/ensemble-rce data/pg1/ensemble-cem --hline 14 15 --linename Test1 Test2
 ```
-![image](/data/figures/TestFigure3.png)
-
 
 The script does not yet support reading a combination of model-free and model-based data as their data length vary a lot. As a result, the plot may only show the curves for the model-free methods. Be careful when selecing the paths to files.
 
