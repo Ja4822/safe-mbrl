@@ -1,4 +1,4 @@
-Constrained Model-based RL with Robust Cross Entropy Method
+Constrained Model-based Reinforcement Learning via Robust Planning
 ==================================
  
 <p align="center">
