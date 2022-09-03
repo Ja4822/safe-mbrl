@@ -55,3 +55,23 @@ dynamic_config:
     load_folder: null
     save: false
     save_folder: null
+
+env_config:
+    action_repeat: 2
+    max_episode_length: 100
+    reward_distance: 1.0  # reward scale
+    placements_margin: 1.2  # min distance of obstacles between each other
+    goal_region: 0.3
+    collision_region: 0.45
+    cost_region: 0.6
+    lidar_max_range: 5.0
+    lidar_dim: 16
+    lvel_lim: 0.3  # linear velocity limit
+    rvel_lim: 0.8  # rotational velocity limit
+
+    # grid map
+    use_grid_map: false
+    xmax: 4
+    ymax: 4
+    resolution: 0.1
+    render: false

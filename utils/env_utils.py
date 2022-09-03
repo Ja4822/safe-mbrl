@@ -10,7 +10,7 @@ import re
 import gym
 import safety_gym
 
-ROBOTS = ['Point','Car', 'Doggo']
+ROBOTS = ['Point', 'Car', 'Doggo']
 TASKS = ['Goal', 'Button']
 
 XYZ_SENSORS = dict(
@@ -36,14 +36,16 @@ DEFAULT_CONFIG = dict(
     stack_obs=False,
 )
 
+
 class Dict2Obj(object):
-    #Turns a dictionary into a class
+    # Turns a dictionary into a class
     def __init__(self, dictionary):
         for key in dictionary:
             setattr(self, key, dictionary[key])
-        
+
     def __repr__(self):
         return "%s" % self.__dict__
+
 
 class SafetyGymEnv():
     def __init__(self, robot='Point', task='Goal', level=1, seed=0, config=DEFAULT_CONFIG):
@@ -60,7 +62,7 @@ class SafetyGymEnv():
         print("Environment configuration: ", self.config)
         self.init_sensor()
 
-         #for uses with ppo in baseline
+        # for uses with ppo in baseline
         self.observation_space = gym.spaces.Box(-np.inf, np.inf, (self.obs_flat_size,), dtype=np.float32)
         self.action_space = gym.spaces.Box(-1, 1, (self.env.action_space.shape[0],), dtype=np.float32)
 

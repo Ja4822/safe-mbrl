@@ -14,3 +14,4 @@ data/*ppo*
 #*.png
 *.pt
 */simple_save/*
+data/
